@@ -12,6 +12,7 @@ const formSchema = z.object({
   site: z.string().optional().default(""),
   revenue: z.string().optional().default(""),
   message: z.string().optional().default(""),
+  newsletter: z.enum(["Sim", "Não"]).optional().default("Não"),
 });
 
 async function piperunFetch(endpoint: string, body: Record<string, unknown>) {
@@ -65,7 +66,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .json({ error: "Dados inválidos", details: parsed.error.flatten() });
   }
 
-  const { name, phone, company, email, site, revenue, message } = parsed.data;
+  const { name, phone, company, email, site, revenue, message, newsletter } = parsed.data;
 
   try {
     // 1. Buscar owner e criar o contato (person)
@@ -103,6 +104,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       revenue && `Faturamento: ${revenue}`,
       site && `Site: ${site}`,
       message && `Mensagem: ${message}`,
+      `Newsletter: ${newsletter}`,
     ]
       .filter(Boolean)
       .join("\n");
