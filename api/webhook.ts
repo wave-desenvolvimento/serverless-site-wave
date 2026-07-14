@@ -112,7 +112,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (!personId) throw new Error("Falha ao obter ID do contato criado.");
 
     // 2. Criar a empresa (organization) e vincular ao contato
-    const org = await piperunFetch("/organizations", {
+    const org = await piperunFetch("/companies", {
       name: company,
       ...(site && { website: site }),
     });
@@ -122,7 +122,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Vincular contato à empresa
     if (orgId) {
       await piperunFetch(`/persons/${personId}`, {
-        organization_id: orgId,
+        company_id: orgId,
       }).catch(() => {
         // não bloqueia se falhar
       });
@@ -146,7 +146,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       pipeline_id: pipelineId,
       stage_id: stageId,
       person_id: personId,
-      ...(orgId && { organization_id: orgId }),
+      ...(orgId && { company_id: orgId }),
       ...(notes && { description: notes }),
     });
 
