@@ -43,16 +43,7 @@ async function getOwnerId(): Promise<number> {
 }
 
 const PIPELINE_ID = 33184; // Funil de vendas Inbound
-
-async function getFirstStageId(): Promise<number> {
-  const res = await fetch(
-    `${PIPERUN_API}/stages?pipeline_id=${PIPELINE_ID}&show=small&token=${PIPERUN_TOKEN}`
-  );
-  const data = await res.json();
-  const stage = data.data?.[0];
-  if (!stage) throw new Error("Nenhuma etapa encontrada no funil.");
-  return stage.id;
-}
+const STAGE_ID = 180708; // Entrada de Leads
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method === "OPTIONS") {
@@ -106,10 +97,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
-    // 3. Buscar primeira etapa do funil
-    const stageId = await getFirstStageId();
-
-    // 4. Criar o deal (negócio)
+    // 3. Criar o deal (negócio)
     const dealTitle = `Lead - ${company} - ${name}`;
     const notes = [
       revenue && `Faturamento: ${revenue}`,
@@ -122,7 +110,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     await piperunFetch("/deals", {
       title: dealTitle,
       pipeline_id: PIPELINE_ID,
-      stage_id: stageId,
+      stage_id: STAGE_ID,
       person_id: personId,
       ...(orgId && { company_id: orgId }),
       ...(notes && { description: notes }),
