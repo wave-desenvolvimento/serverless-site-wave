@@ -75,6 +75,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
+  if (!PIPERUN_TOKEN) {
+    return res.status(500).json({ error: "PIPERUN_TOKEN não configurado" });
+  }
+
   const parsed = formSchema.safeParse(req.body);
   if (!parsed.success) {
     return res
