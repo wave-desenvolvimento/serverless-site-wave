@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { z } from "zod";
 
-const PIPERUN_API = "https://crm.piperun.com/api/v1";
+const PIPERUN_API = "https://api.pipe.run/v1";
 const PIPERUN_TOKEN = process.env.PIPERUN_TOKEN!;
 
 const formSchema = z.object({
