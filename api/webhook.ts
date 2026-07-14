@@ -42,38 +42,16 @@ async function getOwnerId(): Promise<number> {
   return user.id;
 }
 
-async function getPipelineAndStage(): Promise<{
-  pipelineId: number;
-  stageId: number;
-}> {
+const PIPELINE_ID = 33184; // Funil de vendas Inbound
+
+async function getFirstStageId(): Promise<number> {
   const res = await fetch(
-    `${PIPERUN_API}/pipelines?show=small&token=${PIPERUN_TOKEN}`
+    `${PIPERUN_API}/stages?pipeline_id=${PIPELINE_ID}&show=small&token=${PIPERUN_TOKEN}`
   );
   const data = await res.json();
-
-  const pipeline = data.data?.find(
-    (p: { name: string }) =>
-      p.name.toLowerCase().includes("entrada") &&
-      p.name.toLowerCase().includes("lead")
-  );
-
-  if (!pipeline) {
-    throw new Error(
-      "Funil 'Entrada de Leads' não encontrado na Piperun. Verifique o nome do funil."
-    );
-  }
-
-  const stagesRes = await fetch(
-    `${PIPERUN_API}/stages?pipeline_id=${pipeline.id}&show=small&token=${PIPERUN_TOKEN}`
-  );
-  const stagesData = await stagesRes.json();
-
-  const firstStage = stagesData.data?.[0];
-  if (!firstStage) {
-    throw new Error("Nenhuma etapa encontrada no funil.");
-  }
-
-  return { pipelineId: pipeline.id, stageId: firstStage.id };
+  const stage = data.data?.[0];
+  if (!stage) throw new Error("Nenhuma etapa encontrada no funil.");
+  return stage.id;
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -128,8 +106,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
-    // 3. Buscar funil e etapa
-    const { pipelineId, stageId } = await getPipelineAndStage();
+    // 3. Buscar primeira etapa do funil
+    const stageId = await getFirstStageId();
 
     // 4. Criar o deal (negócio)
     const dealTitle = `Lead - ${company} - ${name}`;
@@ -143,7 +121,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     await piperunFetch("/deals", {
       title: dealTitle,
-      pipeline_id: pipelineId,
+      pipeline_id: PIPELINE_ID,
       stage_id: stageId,
       person_id: personId,
       ...(orgId && { company_id: orgId }),
