@@ -32,6 +32,16 @@ async function piperunFetch(endpoint: string, body: Record<string, unknown>) {
   return res.json();
 }
 
+async function getOwnerId(): Promise<number> {
+  const res = await fetch(
+    `${PIPERUN_API}/users?token=${PIPERUN_TOKEN}`
+  );
+  const data = await res.json();
+  const user = data.data?.[0];
+  if (!user) throw new Error("Nenhum usuário encontrado na conta Piperun.");
+  return user.id;
+}
+
 async function getPipelineAndStage(): Promise<{
   pipelineId: number;
   stageId: number;
@@ -89,10 +99,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const { name, phone, company, email, site, revenue, message } = parsed.data;
 
   try {
-    // 1. Criar o contato (person)
+    // 1. Buscar owner e criar o contato (person)
+    const ownerId = await getOwnerId();
     const person = await piperunFetch("/persons", {
       name,
-      owner_id: 1,
+      owner_id: ownerId,
       contact_emails: [{ email, is_main: true }],
       contact_phones: [{ phone, is_main: true }],
     });
