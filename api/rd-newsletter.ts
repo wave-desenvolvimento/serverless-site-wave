@@ -45,6 +45,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           name,
           email,
           available_for_mailing: true,
+          traffic_source: "site",
         },
       }),
     });
