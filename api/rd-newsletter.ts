@@ -32,7 +32,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const { name, email } = parsed.data;
 
   try {
-    const response = await fetch(RD_API, {
+    const response = await fetch(`${RD_API}?api_key=${RD_API_KEY}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

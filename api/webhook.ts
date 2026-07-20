@@ -122,7 +122,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // 4. Se optou por newsletter, envia pra RD Station
     if (newsletter === "Sim" && RD_API_KEY) {
-      await fetch("https://api.rd.services/platform/conversions", {
+      await fetch(`https://api.rd.services/platform/conversions?api_key=${RD_API_KEY}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
