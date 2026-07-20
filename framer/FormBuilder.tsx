@@ -1,7 +1,17 @@
 import { addPropertyControls, ControlType } from "framer"
 import { useState, useCallback, useId } from "react"
 
-type FieldType = "text" | "email" | "tel" | "url" | "number" | "textarea" | "select" | "radio" | "checkbox" | "currency"
+type FieldType =
+    | "text"
+    | "email"
+    | "tel"
+    | "url"
+    | "number"
+    | "textarea"
+    | "select"
+    | "radio"
+    | "checkbox"
+    | "currency"
 
 interface FieldConfig {
     label: string
@@ -113,15 +123,19 @@ export default function FormBuilder(props: Props) {
 
     const formId = useId().replace(/:/g, "")
     const [values, setValues] = useState<Record<string, string>>({})
-    const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle")
-    const [focusedField, setFocusedField] = useState<string | null>(null)
+    const [status, setStatus] = useState<
+        "idle" | "loading" | "success" | "error"
+    >("idle")
 
-    const handleChange = useCallback((name: string, raw: string, type: FieldType) => {
-        let value = raw
-        if (type === "currency") value = formatCurrency(raw)
-        if (type === "tel") value = formatPhone(raw)
-        setValues((prev) => ({ ...prev, [name]: value }))
-    }, [])
+    const handleChange = useCallback(
+        (name: string, raw: string, type: FieldType) => {
+            let value = raw
+            if (type === "currency") value = formatCurrency(raw)
+            if (type === "tel") value = formatPhone(raw)
+            setValues((prev) => ({ ...prev, [name]: value }))
+        },
+        []
+    )
 
     const handleSubmit = useCallback(async () => {
         if (!endpoint) return
@@ -193,16 +207,27 @@ export default function FormBuilder(props: Props) {
 
     if (status === "success") {
         return (
-            <div style={{ fontFamily: font, fontSize, color: successColor, textAlign: "center", padding: 20 }}>
+            <div
+                style={{
+                    fontFamily: font,
+                    fontSize,
+                    color: successColor,
+                    textAlign: "center",
+                    padding: 20,
+                }}
+            >
                 {successMessage}
             </div>
         )
     }
 
     const renderField = (field: FieldConfig, index: number) => {
-        const { label, name, type, placeholder, required, options, halfWidth } = field
+        const { label, name, type, placeholder, required, options, halfWidth } =
+            field
         const val = values[name] || ""
-        const optionsList = options ? options.split(",").map((o) => o.trim()) : []
+        const optionsList = options
+            ? options.split(";").map((o) => o.trim())
+            : []
 
         let input: React.ReactNode
 
@@ -210,11 +235,17 @@ export default function FormBuilder(props: Props) {
             case "textarea":
                 input = (
                     <textarea
-                        style={{ ...inputStyle, minHeight: 120, resize: "vertical" }}
+                        style={{
+                            ...inputStyle,
+                            minHeight: 120,
+                            resize: "vertical",
+                        }}
                         placeholder={placeholder}
                         required={required}
                         value={val}
-                        onChange={(e) => handleChange(name, e.target.value, type)}
+                        onChange={(e) =>
+                            handleChange(name, e.target.value, type)
+                        }
                     />
                 )
                 break
@@ -222,14 +253,24 @@ export default function FormBuilder(props: Props) {
             case "select":
                 input = (
                     <select
-                        style={{ ...inputStyle, cursor: "pointer", appearance: "none" }}
+                        style={{
+                            ...inputStyle,
+                            cursor: "pointer",
+                            appearance: "none",
+                        }}
                         required={required}
                         value={val}
-                        onChange={(e) => handleChange(name, e.target.value, type)}
+                        onChange={(e) =>
+                            handleChange(name, e.target.value, type)
+                        }
                     >
-                        <option value="" disabled>{placeholder || "Selecione..."}</option>
+                        <option value="" disabled>
+                            {placeholder || "Selecione..."}
+                        </option>
                         {optionsList.map((opt) => (
-                            <option key={opt} value={opt}>{opt}</option>
+                            <option key={opt} value={opt}>
+                                {opt}
+                            </option>
                         ))}
                     </select>
                 )
@@ -237,10 +278,40 @@ export default function FormBuilder(props: Props) {
 
             case "radio":
                 input = (
-                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    <div
+                        style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: 8,
+                        }}
+                    >
                         {optionsList.map((opt) => (
-                            <label key={opt} style={{ fontFamily: font, fontSize, color: optionColor, display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
-                                <input type="radio" name={name} value={opt} checked={val === opt} onChange={(e) => handleChange(name, e.target.value, type)} style={{ accentColor: focusBorderColor }} />
+                            <label
+                                key={opt}
+                                style={{
+                                    fontFamily: font,
+                                    fontSize,
+                                    color: optionColor,
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: 8,
+                                    cursor: "pointer",
+                                }}
+                            >
+                                <input
+                                    type="radio"
+                                    name={name}
+                                    value={opt}
+                                    checked={val === opt}
+                                    onChange={(e) =>
+                                        handleChange(
+                                            name,
+                                            e.target.value,
+                                            type
+                                        )
+                                    }
+                                    style={{ accentColor: focusBorderColor }}
+                                />
                                 {opt}
                             </label>
                         ))}
@@ -250,30 +321,95 @@ export default function FormBuilder(props: Props) {
 
             case "checkbox":
                 input = (
-                    <label style={{ fontFamily: font, fontSize, color: optionColor, display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
-                        <input type="checkbox" checked={val === "true"} onChange={(e) => handleChange(name, String(e.target.checked), type)} style={{ accentColor: focusBorderColor }} />
+                    <label
+                        style={{
+                            fontFamily: font,
+                            fontSize,
+                            color: optionColor,
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 8,
+                            cursor: "pointer",
+                        }}
+                    >
+                        <input
+                            type="checkbox"
+                            checked={val === "true"}
+                            onChange={(e) =>
+                                handleChange(
+                                    name,
+                                    String(e.target.checked),
+                                    type
+                                )
+                            }
+                            style={{ accentColor: focusBorderColor }}
+                        />
                         {placeholder || label}
                     </label>
                 )
                 break
 
             case "currency":
-                input = <input type="text" inputMode="numeric" style={inputStyle} placeholder={placeholder || "Ex: 100.000,00"} required={required} value={val} onChange={(e) => handleChange(name, e.target.value, type)} />
+                input = (
+                    <input
+                        type="text"
+                        inputMode="numeric"
+                        style={inputStyle}
+                        placeholder={placeholder || "Ex: 100.000,00"}
+                        required={required}
+                        value={val}
+                        onChange={(e) =>
+                            handleChange(name, e.target.value, type)
+                        }
+                    />
+                )
                 break
 
             case "tel":
-                input = <input type="tel" inputMode="numeric" style={inputStyle} placeholder={placeholder || "(00) 0000-0000"} required={required} value={val} onChange={(e) => handleChange(name, e.target.value, type)} />
+                input = (
+                    <input
+                        type="tel"
+                        inputMode="numeric"
+                        style={inputStyle}
+                        placeholder={placeholder || "(00) 00000-0000"}
+                        required={required}
+                        value={val}
+                        onChange={(e) =>
+                            handleChange(name, e.target.value, type)
+                        }
+                    />
+                )
                 break
 
             default:
-                input = <input type={type} style={inputStyle} placeholder={placeholder} required={required} value={val} onChange={(e) => handleChange(name, e.target.value, type)} />
+                input = (
+                    <input
+                        type={type}
+                        style={inputStyle}
+                        placeholder={placeholder}
+                        required={required}
+                        value={val}
+                        onChange={(e) =>
+                            handleChange(name, e.target.value, type)
+                        }
+                    />
+                )
         }
 
         return (
-            <div key={index} className={halfWidth ? "" : "fb-full"} style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
+            <div
+                key={index}
+                className={halfWidth ? "" : "fb-full"}
+                style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    minWidth: 0,
+                }}
+            >
                 {type !== "checkbox" && (
                     <label style={labelStyle}>
-                        {label}{required && "*"}
+                        {label}
+                        {required && "*"}
                     </label>
                 )}
                 {input}
@@ -286,7 +422,10 @@ export default function FormBuilder(props: Props) {
             <style>{css}</style>
             <form
                 className={`fb-${formId}`}
-                onSubmit={(e) => { e.preventDefault(); handleSubmit() }}
+                onSubmit={(e) => {
+                    e.preventDefault()
+                    handleSubmit()
+                }}
             >
                 {fields.map((field, i) => renderField(field, i))}
 
@@ -304,7 +443,8 @@ export default function FormBuilder(props: Props) {
                             border: "none",
                             borderRadius: buttonRadius,
                             padding: `${buttonPaddingY}px 24px`,
-                            cursor: status === "loading" ? "wait" : "pointer",
+                            cursor:
+                                status === "loading" ? "wait" : "pointer",
                             opacity: status === "loading" ? 0.7 : 1,
                             transition: "opacity 0.2s",
                         }}
@@ -314,7 +454,15 @@ export default function FormBuilder(props: Props) {
                 </div>
 
                 {status === "error" && (
-                    <div className="fb-full" style={{ fontFamily: font, fontSize: fontSize * 0.875, color: errorColor, textAlign: "center" }}>
+                    <div
+                        className="fb-full"
+                        style={{
+                            fontFamily: font,
+                            fontSize: fontSize * 0.875,
+                            color: errorColor,
+                            textAlign: "center",
+                        }}
+                    >
                         {errorMessage}
                     </div>
                 )}
@@ -326,14 +474,96 @@ export default function FormBuilder(props: Props) {
 FormBuilder.defaultProps = {
     endpoint: "https://contrato-bay.vercel.app/api/webhook",
     fields: [
-        { label: "Nome Completo", name: "name", type: "text", placeholder: "John doe", required: true, options: "", halfWidth: true },
-        { label: "Telefone / WhatsApp", name: "phone", type: "tel", placeholder: "(00) 0000-0000", required: false, options: "", halfWidth: true },
-        { label: "Nome da Empresa", name: "company", type: "text", placeholder: "Minha empresa", required: true, options: "", halfWidth: true },
-        { label: "E-mail Corporativo", name: "email", type: "email", placeholder: "johndoe@minhaempresa.com.br", required: true, options: "", halfWidth: true },
-        { label: "Site", name: "site", type: "text", placeholder: "www.minhaempresa.com.br", required: true, options: "", halfWidth: false },
-        { label: "Qual o faturamento mensal da sua empresa?", name: "revenue", type: "currency", placeholder: "Ex: 100.000,00", required: true, options: "", halfWidth: false },
-        { label: "Mensagem", name: "message", type: "textarea", placeholder: "Diga-nos o propósito do contato", required: false, options: "", halfWidth: false },
-        { label: "Gostaria de receber nossos e-mails com estratégias e materiais sobre marketing digital?", name: "newsletter", type: "radio", placeholder: "", required: true, options: "Sim, Não", halfWidth: false },
+        {
+            label: "Nome",
+            name: "name",
+            type: "text",
+            placeholder: "Seu nome completo",
+            required: true,
+            options: "",
+            halfWidth: true,
+        },
+        {
+            label: "E-mail Corporativo",
+            name: "email",
+            type: "email",
+            placeholder: "johndoe@minhaempresa.com.br",
+            required: true,
+            options: "",
+            halfWidth: true,
+        },
+        {
+            label: "Telefone / WhatsApp",
+            name: "phone",
+            type: "tel",
+            placeholder: "(00) 00000-0000",
+            required: true,
+            options: "",
+            halfWidth: true,
+        },
+        {
+            label: "Nome da Empresa",
+            name: "company",
+            type: "text",
+            placeholder: "Minha empresa",
+            required: true,
+            options: "",
+            halfWidth: true,
+        },
+        {
+            label: "Qual o faturamento mensal da sua empresa?",
+            name: "revenue",
+            type: "select",
+            placeholder: "Selecione...",
+            required: true,
+            options: "0 a 99 mil; 100 mil a 499 mil; 500 mil a 999 mil; 1 milhao a 7 milhoes; Acima de 8 milhoes",
+            halfWidth: false,
+        },
+        {
+            label: "Qual plataforma voce utiliza no seu e-commerce?",
+            name: "platform",
+            type: "select",
+            placeholder: "Selecione...",
+            required: true,
+            options: "Nao possuo; Shopify; VTEX; Outra",
+            halfWidth: true,
+        },
+        {
+            label: "Cargo",
+            name: "role",
+            type: "select",
+            placeholder: "Selecione...",
+            required: true,
+            options: "Diretor; Proprietario; Gerente; Coordenador; Analista; Assistente",
+            halfWidth: true,
+        },
+        {
+            label: "Numero de funcionarios",
+            name: "employees",
+            type: "select",
+            placeholder: "Selecione...",
+            required: true,
+            options: "1 a 5; 6 a 10; 11 a 20; 21 a 50; 51 a 100; Mais de 100",
+            halfWidth: true,
+        },
+        {
+            label: "Como voce conheceu a Wave Commerce?",
+            name: "source",
+            type: "select",
+            placeholder: "Selecione...",
+            required: true,
+            options: "Indicacao; Instagram; LinkedIn; Google; Outro",
+            halfWidth: true,
+        },
+        {
+            label: "Gostaria de receber nossos e-mails com estrategias e materiais sobre marketing digital?",
+            name: "newsletter",
+            type: "radio",
+            placeholder: "",
+            required: true,
+            options: "Sim; Nao",
+            halfWidth: false,
+        },
     ],
     submitText: "Enviar",
     loadingText: "Enviando...",
@@ -384,62 +614,293 @@ addPropertyControls(FormBuilder, {
         control: {
             type: ControlType.Object,
             controls: {
-                label: { type: ControlType.String, title: "Label", defaultValue: "Campo" },
-                name: { type: ControlType.String, title: "Name (key)", defaultValue: "campo" },
+                label: {
+                    type: ControlType.String,
+                    title: "Label",
+                    defaultValue: "Campo",
+                },
+                name: {
+                    type: ControlType.String,
+                    title: "Name (key)",
+                    defaultValue: "campo",
+                },
                 type: {
                     type: ControlType.Enum,
                     title: "Tipo",
-                    options: ["text", "email", "tel", "url", "number", "textarea", "select", "radio", "checkbox", "currency"],
-                    optionTitles: ["Texto", "Email", "Telefone", "URL", "Número", "Textarea", "Select", "Radio", "Checkbox", "Moeda (R$)"],
+                    options: [
+                        "text",
+                        "email",
+                        "tel",
+                        "url",
+                        "number",
+                        "textarea",
+                        "select",
+                        "radio",
+                        "checkbox",
+                        "currency",
+                    ],
+                    optionTitles: [
+                        "Texto",
+                        "Email",
+                        "Telefone",
+                        "URL",
+                        "Numero",
+                        "Textarea",
+                        "Select",
+                        "Radio",
+                        "Checkbox",
+                        "Moeda (R$)",
+                    ],
                     defaultValue: "text",
                 },
-                placeholder: { type: ControlType.String, title: "Placeholder", defaultValue: "" },
-                required: { type: ControlType.Boolean, title: "Obrigatório", defaultValue: false },
-                options: { type: ControlType.String, title: "Opções (vírgula)", defaultValue: "" },
-                halfWidth: { type: ControlType.Boolean, title: "Meia largura", defaultValue: false },
+                placeholder: {
+                    type: ControlType.String,
+                    title: "Placeholder",
+                    defaultValue: "",
+                },
+                required: {
+                    type: ControlType.Boolean,
+                    title: "Obrigatorio",
+                    defaultValue: false,
+                },
+                options: {
+                    type: ControlType.String,
+                    title: "Opcoes (ponto e virgula)",
+                    defaultValue: "",
+                },
+                halfWidth: {
+                    type: ControlType.Boolean,
+                    title: "Meia largura",
+                    defaultValue: false,
+                },
             },
         },
         defaultValue: FormBuilder.defaultProps.fields,
     },
-    submitText: { type: ControlType.String, title: "Texto do botão", defaultValue: FormBuilder.defaultProps.submitText },
-    loadingText: { type: ControlType.String, title: "Texto carregando", defaultValue: FormBuilder.defaultProps.loadingText },
-    successMessage: { type: ControlType.String, title: "Msg de sucesso", defaultValue: FormBuilder.defaultProps.successMessage },
-    errorMessage: { type: ControlType.String, title: "Msg de erro", defaultValue: FormBuilder.defaultProps.errorMessage },
-    font: { type: ControlType.String, title: "Fonte", defaultValue: FormBuilder.defaultProps.font },
-    fontSize: { type: ControlType.Number, title: "Tamanho fonte", min: 10, max: 24, step: 1, defaultValue: FormBuilder.defaultProps.fontSize },
-    fontWeight: { type: ControlType.Number, title: "Peso fonte", min: 100, max: 900, step: 100, defaultValue: FormBuilder.defaultProps.fontWeight },
+    submitText: {
+        type: ControlType.String,
+        title: "Texto do botao",
+        defaultValue: FormBuilder.defaultProps.submitText,
+    },
+    loadingText: {
+        type: ControlType.String,
+        title: "Texto carregando",
+        defaultValue: FormBuilder.defaultProps.loadingText,
+    },
+    successMessage: {
+        type: ControlType.String,
+        title: "Msg de sucesso",
+        defaultValue: FormBuilder.defaultProps.successMessage,
+    },
+    errorMessage: {
+        type: ControlType.String,
+        title: "Msg de erro",
+        defaultValue: FormBuilder.defaultProps.errorMessage,
+    },
+    font: {
+        type: ControlType.String,
+        title: "Fonte",
+        defaultValue: FormBuilder.defaultProps.font,
+    },
+    fontSize: {
+        type: ControlType.Number,
+        title: "Tamanho fonte",
+        min: 10,
+        max: 24,
+        step: 1,
+        defaultValue: FormBuilder.defaultProps.fontSize,
+    },
+    fontWeight: {
+        type: ControlType.Number,
+        title: "Peso fonte",
+        min: 100,
+        max: 900,
+        step: 100,
+        defaultValue: FormBuilder.defaultProps.fontWeight,
+    },
     fontStyle: {
         type: ControlType.Enum,
         title: "Estilo fonte",
         options: ["normal", "italic"],
-        optionTitles: ["Normal", "Itálico"],
+        optionTitles: ["Normal", "Italico"],
         defaultValue: FormBuilder.defaultProps.fontStyle,
     },
-    textColor: { type: ControlType.Color, title: "Cor do texto", defaultValue: FormBuilder.defaultProps.textColor },
-    placeholderColor: { type: ControlType.Color, title: "Cor placeholder", defaultValue: FormBuilder.defaultProps.placeholderColor },
-    labelColor: { type: ControlType.Color, title: "Cor do label", defaultValue: FormBuilder.defaultProps.labelColor },
-    labelSize: { type: ControlType.Number, title: "Tamanho label", min: 8, max: 18, step: 1, defaultValue: FormBuilder.defaultProps.labelSize },
-    labelWeight: { type: ControlType.Number, title: "Peso label", min: 300, max: 900, step: 100, defaultValue: FormBuilder.defaultProps.labelWeight },
-    labelUppercase: { type: ControlType.Boolean, title: "Label maiúsculo", defaultValue: FormBuilder.defaultProps.labelUppercase },
-    labelSpacing: { type: ControlType.Number, title: "Espaçamento label", min: 0, max: 8, step: 0.5, defaultValue: FormBuilder.defaultProps.labelSpacing },
-    inputBg: { type: ControlType.Color, title: "Fundo input", defaultValue: FormBuilder.defaultProps.inputBg },
-    inputBorder: { type: ControlType.Color, title: "Borda input", defaultValue: FormBuilder.defaultProps.inputBorder },
-    inputBorderRadius: { type: ControlType.Number, title: "Radius input", min: 0, max: 24, step: 1, defaultValue: FormBuilder.defaultProps.inputBorderRadius },
-    inputPaddingX: { type: ControlType.Number, title: "Padding X input", min: 4, max: 32, step: 2, defaultValue: FormBuilder.defaultProps.inputPaddingX },
-    inputPaddingY: { type: ControlType.Number, title: "Padding Y input", min: 4, max: 32, step: 2, defaultValue: FormBuilder.defaultProps.inputPaddingY },
-    focusBorderColor: { type: ControlType.Color, title: "Borda focus", defaultValue: FormBuilder.defaultProps.focusBorderColor },
-    optionColor: { type: ControlType.Color, title: "Cor opções (radio/check)", defaultValue: FormBuilder.defaultProps.optionColor },
-    buttonBg: { type: ControlType.Color, title: "Fundo botão", defaultValue: FormBuilder.defaultProps.buttonBg },
-    buttonColor: { type: ControlType.Color, title: "Cor botão", defaultValue: FormBuilder.defaultProps.buttonColor },
-    buttonRadius: { type: ControlType.Number, title: "Radius botão", min: 0, max: 50, step: 1, defaultValue: FormBuilder.defaultProps.buttonRadius },
-    buttonPaddingY: { type: ControlType.Number, title: "Padding Y botão", min: 8, max: 32, step: 2, defaultValue: FormBuilder.defaultProps.buttonPaddingY },
-    buttonFontSize: { type: ControlType.Number, title: "Fonte botão", min: 12, max: 24, step: 1, defaultValue: FormBuilder.defaultProps.buttonFontSize },
-    buttonFontWeight: { type: ControlType.Number, title: "Peso botão", min: 300, max: 900, step: 100, defaultValue: FormBuilder.defaultProps.buttonFontWeight },
-    gap: { type: ControlType.Number, title: "Espaço colunas", min: 4, max: 40, step: 2, defaultValue: FormBuilder.defaultProps.gap },
-    rowGap: { type: ControlType.Number, title: "Espaço linhas", min: 4, max: 40, step: 2, defaultValue: FormBuilder.defaultProps.rowGap },
-    labelGap: { type: ControlType.Number, title: "Espaço label/input", min: 0, max: 16, step: 1, defaultValue: FormBuilder.defaultProps.labelGap },
-    forceOneColumn: { type: ControlType.Boolean, title: "Forçar 1 coluna", defaultValue: FormBuilder.defaultProps.forceOneColumn },
-    mobileBreakpoint: { type: ControlType.Number, title: "Breakpoint mobile", min: 320, max: 1024, step: 10, defaultValue: FormBuilder.defaultProps.mobileBreakpoint, hidden: (props: any) => props.forceOneColumn },
-    successColor: { type: ControlType.Color, title: "Cor sucesso", defaultValue: FormBuilder.defaultProps.successColor },
-    errorColor: { type: ControlType.Color, title: "Cor erro", defaultValue: FormBuilder.defaultProps.errorColor },
+    textColor: {
+        type: ControlType.Color,
+        title: "Cor do texto",
+        defaultValue: FormBuilder.defaultProps.textColor,
+    },
+    placeholderColor: {
+        type: ControlType.Color,
+        title: "Cor placeholder",
+        defaultValue: FormBuilder.defaultProps.placeholderColor,
+    },
+    labelColor: {
+        type: ControlType.Color,
+        title: "Cor do label",
+        defaultValue: FormBuilder.defaultProps.labelColor,
+    },
+    labelSize: {
+        type: ControlType.Number,
+        title: "Tamanho label",
+        min: 8,
+        max: 18,
+        step: 1,
+        defaultValue: FormBuilder.defaultProps.labelSize,
+    },
+    labelWeight: {
+        type: ControlType.Number,
+        title: "Peso label",
+        min: 300,
+        max: 900,
+        step: 100,
+        defaultValue: FormBuilder.defaultProps.labelWeight,
+    },
+    labelUppercase: {
+        type: ControlType.Boolean,
+        title: "Label maiusculo",
+        defaultValue: FormBuilder.defaultProps.labelUppercase,
+    },
+    labelSpacing: {
+        type: ControlType.Number,
+        title: "Espacamento label",
+        min: 0,
+        max: 8,
+        step: 0.5,
+        defaultValue: FormBuilder.defaultProps.labelSpacing,
+    },
+    inputBg: {
+        type: ControlType.Color,
+        title: "Fundo input",
+        defaultValue: FormBuilder.defaultProps.inputBg,
+    },
+    inputBorder: {
+        type: ControlType.Color,
+        title: "Borda input",
+        defaultValue: FormBuilder.defaultProps.inputBorder,
+    },
+    inputBorderRadius: {
+        type: ControlType.Number,
+        title: "Radius input",
+        min: 0,
+        max: 24,
+        step: 1,
+        defaultValue: FormBuilder.defaultProps.inputBorderRadius,
+    },
+    inputPaddingX: {
+        type: ControlType.Number,
+        title: "Padding X input",
+        min: 4,
+        max: 32,
+        step: 2,
+        defaultValue: FormBuilder.defaultProps.inputPaddingX,
+    },
+    inputPaddingY: {
+        type: ControlType.Number,
+        title: "Padding Y input",
+        min: 4,
+        max: 32,
+        step: 2,
+        defaultValue: FormBuilder.defaultProps.inputPaddingY,
+    },
+    focusBorderColor: {
+        type: ControlType.Color,
+        title: "Borda focus",
+        defaultValue: FormBuilder.defaultProps.focusBorderColor,
+    },
+    optionColor: {
+        type: ControlType.Color,
+        title: "Cor opcoes (radio/check)",
+        defaultValue: FormBuilder.defaultProps.optionColor,
+    },
+    buttonBg: {
+        type: ControlType.Color,
+        title: "Fundo botao",
+        defaultValue: FormBuilder.defaultProps.buttonBg,
+    },
+    buttonColor: {
+        type: ControlType.Color,
+        title: "Cor botao",
+        defaultValue: FormBuilder.defaultProps.buttonColor,
+    },
+    buttonRadius: {
+        type: ControlType.Number,
+        title: "Radius botao",
+        min: 0,
+        max: 50,
+        step: 1,
+        defaultValue: FormBuilder.defaultProps.buttonRadius,
+    },
+    buttonPaddingY: {
+        type: ControlType.Number,
+        title: "Padding Y botao",
+        min: 8,
+        max: 32,
+        step: 2,
+        defaultValue: FormBuilder.defaultProps.buttonPaddingY,
+    },
+    buttonFontSize: {
+        type: ControlType.Number,
+        title: "Fonte botao",
+        min: 12,
+        max: 24,
+        step: 1,
+        defaultValue: FormBuilder.defaultProps.buttonFontSize,
+    },
+    buttonFontWeight: {
+        type: ControlType.Number,
+        title: "Peso botao",
+        min: 300,
+        max: 900,
+        step: 100,
+        defaultValue: FormBuilder.defaultProps.buttonFontWeight,
+    },
+    gap: {
+        type: ControlType.Number,
+        title: "Espaco colunas",
+        min: 4,
+        max: 40,
+        step: 2,
+        defaultValue: FormBuilder.defaultProps.gap,
+    },
+    rowGap: {
+        type: ControlType.Number,
+        title: "Espaco linhas",
+        min: 4,
+        max: 40,
+        step: 2,
+        defaultValue: FormBuilder.defaultProps.rowGap,
+    },
+    labelGap: {
+        type: ControlType.Number,
+        title: "Espaco label/input",
+        min: 0,
+        max: 16,
+        step: 1,
+        defaultValue: FormBuilder.defaultProps.labelGap,
+    },
+    forceOneColumn: {
+        type: ControlType.Boolean,
+        title: "Forcar 1 coluna",
+        defaultValue: FormBuilder.defaultProps.forceOneColumn,
+    },
+    mobileBreakpoint: {
+        type: ControlType.Number,
+        title: "Breakpoint mobile",
+        min: 320,
+        max: 1024,
+        step: 10,
+        defaultValue: FormBuilder.defaultProps.mobileBreakpoint,
+        hidden: (props: any) => props.forceOneColumn,
+    },
+    successColor: {
+        type: ControlType.Color,
+        title: "Cor sucesso",
+        defaultValue: FormBuilder.defaultProps.successColor,
+    },
+    errorColor: {
+        type: ControlType.Color,
+        title: "Cor erro",
+        defaultValue: FormBuilder.defaultProps.errorColor,
+    },
 })

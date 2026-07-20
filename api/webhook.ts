@@ -3,16 +3,19 @@ import { z } from "zod";
 
 const PIPERUN_API = "https://api.pipe.run/v1";
 const PIPERUN_TOKEN = process.env.PIPERUN_TOKEN!;
+const RD_API_KEY = process.env.RD_STATION_API_KEY;
 
 const formSchema = z.object({
   name: z.string().min(1),
+  email: z.string().email(),
   phone: z.string().min(1),
   company: z.string().min(1),
-  email: z.string().email(),
-  site: z.string().optional().default(""),
-  revenue: z.string().optional().default(""),
-  message: z.string().optional().default(""),
-  newsletter: z.enum(["Sim", "Não"]).optional().default("Não"),
+  revenue: z.string().min(1),
+  platform: z.string().min(1),
+  role: z.string().min(1),
+  employees: z.string().min(1),
+  source: z.string().min(1),
+  newsletter: z.enum(["Sim", "Não"]),
 });
 
 async function piperunFetch(endpoint: string, body: Record<string, unknown>) {
@@ -66,7 +69,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .json({ error: "Dados inválidos", details: parsed.error.flatten() });
   }
 
-  const { name, phone, company, email, site, revenue, message, newsletter } = parsed.data;
+  const { name, email, phone, company, revenue, platform, role, employees, source, newsletter } = parsed.data;
 
   try {
     // 1. Buscar owner e criar o contato (person)
@@ -84,7 +87,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // 2. Criar a empresa (organization) e vincular ao contato
     const org = await piperunFetch("/companies", {
       name: company,
-      ...(site && { website: site }),
     });
 
     const orgId = org.data?.id;
@@ -101,13 +103,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // 3. Criar o deal (negócio)
     const dealTitle = `Lead - ${company} - ${name}`;
     const notes = [
-      revenue && `Faturamento: ${revenue}`,
-      site && `Site: ${site}`,
-      message && `Mensagem: ${message}`,
+      `Faturamento: ${revenue}`,
+      `Plataforma: ${platform}`,
+      `Cargo: ${role}`,
+      `Funcionários: ${employees}`,
+      `Como conheceu: ${source}`,
       `Newsletter: ${newsletter}`,
-    ]
-      .filter(Boolean)
-      .join("\n");
+    ].join("\n");
 
     await piperunFetch("/deals", {
       title: dealTitle,
@@ -117,6 +119,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       ...(orgId && { company_id: orgId }),
       ...(notes && { description: notes }),
     });
+
+    // 4. Se optou por newsletter, envia pra RD Station
+    if (newsletter === "Sim" && RD_API_KEY) {
+      await fetch("https://api.rd.services/platform/conversions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          event_type: "CONVERSION",
+          event_family: "CDP",
+          payload: {
+            conversion_identifier: "formulario-contato",
+            name,
+            email,
+            available_for_mailing: true,
+          },
+        }),
+      }).catch(() => {
+        // não bloqueia o fluxo se RD falhar
+      });
+    }
 
     return res.status(200).json({ success: true });
   } catch (err) {
