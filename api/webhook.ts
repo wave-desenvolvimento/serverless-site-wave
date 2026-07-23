@@ -10,12 +10,14 @@ const formSchema = z.object({
   email: z.string().email(),
   phone: z.string().min(1),
   company: z.string().min(1),
+  site: z.string().optional().default(""),
   revenue: z.string().min(1),
   platform: z.string().min(1),
   role: z.string().min(1),
   employees: z.string().min(1),
   source: z.string().min(1),
-  newsletter: z.enum(["Sim", "Não"]),
+  message: z.string().optional().default(""),
+  newsletter: z.enum(["Sim", "Não"]).optional().default("Não"),
 });
 
 async function piperunFetch(endpoint: string, body: Record<string, unknown>) {
@@ -36,14 +38,28 @@ async function piperunFetch(endpoint: string, body: Record<string, unknown>) {
   return res.json();
 }
 
-async function getOwnerId(): Promise<number> {
+async function piperunGet(endpoint: string) {
   const res = await fetch(
-    `${PIPERUN_API}/users?token=${PIPERUN_TOKEN}`
+    `${PIPERUN_API}${endpoint}${endpoint.includes("?") ? "&" : "?"}token=${PIPERUN_TOKEN}`
   );
-  const data = await res.json();
-  const user = data.data?.[0];
+  if (!res.ok) return null;
+  return res.json();
+}
+
+async function getOwnerId(): Promise<number> {
+  const data = await piperunGet("/users");
+  const user = data?.data?.[0];
   if (!user) throw new Error("Nenhum usuário encontrado na conta Piperun.");
   return user.id;
+}
+
+async function getOriginId(sourceName: string): Promise<number | null> {
+  const data = await piperunGet("/origem-de-oportunidades");
+  if (!data?.data) return null;
+  const match = data.data.find(
+    (o: { name: string }) => o.name.toLowerCase() === sourceName.toLowerCase()
+  );
+  return match?.id ?? null;
 }
 
 const PIPELINE_ID = 33184; // Funil de vendas Inbound
@@ -69,14 +85,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .json({ error: "Dados inválidos", details: parsed.error.flatten() });
   }
 
-  const { name, email, phone, company, revenue, platform, role, employees, source, newsletter } = parsed.data;
+  const { name, email, phone, company, site, revenue, platform, role, employees, source, message, newsletter } = parsed.data;
 
   try {
-    // 1. Buscar owner e criar o contato (person)
-    const ownerId = await getOwnerId();
+    // 1. Buscar owner e origem em paralelo
+    const [ownerId, originId] = await Promise.all([
+      getOwnerId(),
+      getOriginId(source),
+    ]);
+
+    // 2. Criar o contato (person)
     const person = await piperunFetch("/persons", {
       name,
       owner_id: ownerId,
+      job_title: role,
+      ...(site && { website: site }),
       contact_emails: [{ email, is_main: true }],
       contact_phones: [{ phone, is_main: true }],
     });
@@ -84,9 +107,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const personId = person.data?.id;
     if (!personId) throw new Error("Falha ao obter ID do contato criado.");
 
-    // 2. Criar a empresa (organization) e vincular ao contato
+    // 3. Criar a empresa (organization) e vincular ao contato
     const org = await piperunFetch("/companies", {
       name: company,
+      size: employees,
+      ...(site && { website: site }),
     });
 
     const orgId = org.data?.id;
@@ -100,16 +125,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
-    // 3. Criar o deal (negócio)
-    const dealTitle = `Lead - ${company} - ${name}`;
-    const notes = [
+    // 4. Criar o deal (negócio)
+    const dealTitle = `${company}`;
+    const noteLines = [
       `Faturamento: ${revenue}`,
       `Plataforma: ${platform}`,
-      `Cargo: ${role}`,
-      `Funcionários: ${employees}`,
-      `Como conheceu: ${source}`,
       `Newsletter: ${newsletter}`,
-    ].join("\n");
+      message && `Mensagem: ${message}`,
+    ].filter(Boolean);
+    const notes = noteLines.join("\n");
 
     await piperunFetch("/deals", {
       title: dealTitle,
@@ -117,6 +141,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       stage_id: STAGE_ID,
       person_id: personId,
       ...(orgId && { company_id: orgId }),
+      ...(originId && { origin_id: originId }),
       ...(notes && { description: notes }),
     });
 
