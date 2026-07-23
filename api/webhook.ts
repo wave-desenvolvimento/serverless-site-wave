@@ -54,7 +54,7 @@ async function getOwnerId(): Promise<number> {
 }
 
 async function getOriginId(sourceName: string): Promise<number | null> {
-  const data = await piperunGet("/origem-de-oportunidades");
+  const data = await piperunGet("/origins");
   if (!data?.data) return null;
   const match = data.data.find(
     (o: { name: string }) => o.name.toLowerCase() === sourceName.toLowerCase()
