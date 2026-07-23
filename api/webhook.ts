@@ -38,29 +38,21 @@ async function piperunFetch(endpoint: string, body: Record<string, unknown>) {
   return res.json();
 }
 
-async function piperunGet(endpoint: string) {
-  const res = await fetch(
-    `${PIPERUN_API}${endpoint}${endpoint.includes("?") ? "&" : "?"}token=${PIPERUN_TOKEN}`
-  );
-  if (!res.ok) return null;
-  return res.json();
-}
-
 async function getOwnerId(): Promise<number> {
-  const data = await piperunGet("/users");
+  const res = await fetch(`${PIPERUN_API}/users?token=${PIPERUN_TOKEN}`);
+  const data = await res.json();
   const user = data?.data?.[0];
   if (!user) throw new Error("Nenhum usuário encontrado na conta Piperun.");
   return user.id;
 }
 
-async function getOriginId(sourceName: string): Promise<number | null> {
-  const data = await piperunGet("/origins");
-  if (!data?.data) return null;
-  const match = data.data.find(
-    (o: { name: string }) => o.name.toLowerCase() === sourceName.toLowerCase()
-  );
-  return match?.id ?? null;
-}
+const ORIGIN_MAP: Record<string, number> = {
+  "Indicação": 339202,
+  "Instagram": 268178,
+  "LinkedIn": 268175,
+  "Google": 442480,
+  "Outro": 349932,
+};
 
 const PIPELINE_ID = 33184; // Funil de vendas Inbound
 const STAGE_ID = 180708; // Entrada de Leads
@@ -88,11 +80,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const { name, email, phone, company, site, revenue, platform, role, employees, source, message, newsletter } = parsed.data;
 
   try {
-    // 1. Buscar owner e origem em paralelo
-    const [ownerId, originId] = await Promise.all([
-      getOwnerId(),
-      getOriginId(source),
-    ]);
+    // 1. Buscar owner
+    const ownerId = await getOwnerId();
+    const originId = ORIGIN_MAP[source] ?? null;
 
     // 2. Criar o contato (person)
     const person = await piperunFetch("/persons", {
